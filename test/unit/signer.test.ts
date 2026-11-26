@@ -113,14 +113,12 @@ describe('sync', () => {
 });
 
 describe('signer identity', () => {
-	it('keeps the account address while the public key moves', async () => {
+	it('identifies as the account and keeps its current public key private', async () => {
 		const { signer } = signerAt(4);
-		expect(() => signer.getPublicKey()).toThrow(/sync/);
 		await signer.sync();
 		expect(signer.toSuiAddress()).toBe(keys.account);
 		expect(signer.getKeyScheme()).toBe('Secp256k1');
-		expect(signer.getPublicKey().toRawBytes()).toEqual(keys.publicKey(4).toRawBytes());
-		expect(signer.getPublicKey().toSuiAddress()).not.toBe(signer.toSuiAddress());
+		expect(() => signer.getPublicKey()).toThrow(/does not expose/);
 	});
 
 	it('refuses to sign anything but a transaction', async () => {

@@ -1,17 +1,17 @@
 # one-time-auth
 
-One-time signing keys for a Sui account, as a thin wrapper over `@mysten/sui` 3.x.
+> [!WARNING]
+> Status: prototype. Mnemonic only, secp256k1 only, not audited.
+
+One-time signing keys for a Sui account, as a thin wrapper over `@mysten/sui`.
 
 A Sui signature carries the signer's full public key, so an account's key is exposed from its
 first transaction on. `OneTimeAuth` never leaves a usable public key on chain: every transaction is
 signed by a key that the same transaction retires, and the chain only holds a hash of the next
-one. Between transactions, the account is protected by a hash and a PRF rather than by ECDSA.
+one.
 
 It is built on Sui's address aliases (`0x2::address_alias`), which let an account replace the set
-of addresses allowed to sign for it. Aliases are live on mainnet (protocol 116), testnet and
-devnet.
-
-Status: prototype. Mnemonic only, secp256k1 only, not audited.
+of addresses allowed to sign for it.
 
 ## How it works
 
@@ -76,8 +76,7 @@ tx.transferObjects([coin], recipient);
 const result = await signer.signAndExecuteTransaction({ transaction: tx });
 ```
 
-`OneTimeAuth` extends the SDK's `Signer`. `toSuiAddress()` is the account; `getPublicKey()` is the
-current one-time key.
+`OneTimeAuth` extends the SDK's `Signer`, and `toSuiAddress()` is the account.
 
 | Method | What it does |
 | --- | --- |
@@ -90,15 +89,18 @@ current one-time key.
 | `unenroll({ to })` | Replaces the alias set with `to` and returns the last index used. |
 
 `sign`, `signWithIntent` and `signPersonalMessage` throw: a signature without a rotation would
-reveal the current key and leave it in place.
+reveal the current key and leave it in place. `getPublicKey` throws as well: the current public key
+stays private until the transaction that retires it.
 
 To go through `client.core.signAndExecuteTransaction({ transaction, signer })` instead, call
-`prepare(tx)` first and create the client with `restrictedMoveCalls: []`. The SDK refuses to build
-calls into `0x2::address_alias` by default; `OneTimeAuth` lifts that for its own builds and
-replaces it with a narrower rule, enforced at signing: the transaction must contain exactly one
-`address_alias` call, and it must be the expected rotation.
+`prepare(tx)` first and create the client with `restrictedMoveCalls: []`. `@mysten/sui` itself
+refuses to build a transaction that calls `0x2::address_alias` (its
+`DEFAULT_RESTRICTED_MOVE_CALLS`) unless the client or the `build()` call sets `restrictedMoveCalls`.
+`OneTimeAuth` lifts that for its own builds and replaces it with a narrower rule, enforced at
+signing: the transaction must contain exactly one `address_alias` call, and it must be the expected
+rotation.
 
-## Failed transactions
+## Important: Failed transactions
 
 A signed transaction that aborts on chain reverts its own rotation but has already published the
 signer's public key. `signAndExecuteTransaction` deals with this in two ways:
@@ -125,11 +127,7 @@ It does not protect against:
 - **A stolen mnemonic.**
 - **The window after a failed transaction**, until the follow-up rotation lands.
 
-The additive form `sk_base + s_i` is no stronger than independent keys would be. It is there so
-that the base key can later live in an MPC or HSM signer, and so that addresses can be derived
-from `pk_base` and the salts without any secret key.
-
-## Things to know
+## Limitations
 
 - One transaction at a time per account. Calls on one instance are queued; two processes with the
   same mnemonic will race, and the loser's transaction is rejected.

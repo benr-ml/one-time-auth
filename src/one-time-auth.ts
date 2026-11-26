@@ -1,6 +1,6 @@
 import type { ClientWithCoreApi, SuiClientTypes } from '@mysten/sui/client';
 import { Signer } from '@mysten/sui/cryptography';
-import type { PublicKey, SignatureScheme, SignatureWithBytes } from '@mysten/sui/cryptography';
+import type { SignatureScheme, SignatureWithBytes } from '@mysten/sui/cryptography';
 import type { Secp256k1Keypair } from '@mysten/sui/keypairs/secp256k1';
 import { Transaction, TransactionDataBuilder } from '@mysten/sui/transactions';
 import { normalizeSuiAddress } from '@mysten/sui/utils';
@@ -135,15 +135,14 @@ export class OneTimeAuth extends Signer {
 		return 'Secp256k1';
 	}
 
-	/** The key that currently signs for the account, as far as this instance knows. */
-	getPublicKey(): PublicKey {
-		const state = this.#state;
-		if (!state) {
-			throw new OneTimeAuthError('State is unknown; call sync() first');
-		}
-		return state.status === 'active'
-			? this.#keys.publicKey(state.index)
-			: this.#keys.baseKeypair().getPublicKey();
+	/**
+	 * Not supported. `Signer` declares the method, but the current one-time public key has to stay
+	 * private until the transaction that retires it: until then the chain only shows its hash.
+	 */
+	getPublicKey(): never {
+		throw new OneTimeAuthError(
+			'OneTimeAuth does not expose its current public key: it stays private until it is used',
+		);
 	}
 
 	/** Reads the alias set and works out which one-time key it holds. */

@@ -127,8 +127,11 @@ describe('OneTimeAuth', () => {
 			expect(signerOf(result)).toEqual(keys.publicKey(index).toRawBytes());
 			expect(result.Transaction!.transaction.sender).toBe(account);
 			expect(await aliasesOf(account)).toEqual([keys.address(index + 1)]);
-			expect(signer.state).toMatchObject({ status: 'active', index: index + 1 });
-			expect(signer.getPublicKey().toSuiAddress()).toBe(keys.address(index + 1));
+			expect(signer.state).toMatchObject({
+				status: 'active',
+				index: index + 1,
+				alias: keys.address(index + 1),
+			});
 		}
 		expect(await signer.sync()).toMatchObject({ index: 3 });
 	});
