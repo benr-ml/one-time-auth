@@ -1,0 +1,38 @@
+{
+	"name": "one-time-auth",
+	"version": "0.0.1",
+	"private": true,
+	"description": "One-time signing keys for Sui accounts, built on address aliases",
+	"type": "module",
+	"main": "./dist/index.js",
+	"types": "./dist/index.d.ts",
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"import": "./dist/index.js"
+		}
+	},
+	"files": [
+		"dist"
+	],
+	"scripts": {
+		"build": "rm -rf dist && tsc -p tsconfig.build.json",
+		"typecheck": "tsc --noEmit",
+		"test": "vitest run",
+		"test:e2e": "vitest run --config test/e2e/vitest.config.ts"
+	},
+	"peerDependencies": {
+		"@mysten/sui": "^3.0.1"
+	},
+	"dependencies": {
+		"@noble/curves": "^2.4.0",
+		"@noble/hashes": "^2.4.0"
+	},
+	"devDependencies": {
+		"@mysten/sui": "^3.0.1",
+		"@scure/bip39": "^2.4.0",
+		"@types/node": "^26.6.11",
+		"typescript": "^7.0.2",
+		"vitest": "^5.1.2"
+	}
+}
